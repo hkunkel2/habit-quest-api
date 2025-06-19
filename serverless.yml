@@ -1,0 +1,53 @@
+service: habit-quest-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: dev
+  apiGateway:
+    apiKeys:
+      - habitQuestApiKey
+  environment:
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: ${env:DB_PORT}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_NAME: ${env:DB_NAME}
+  vpc:
+    securityGroupIds:
+      - sg-84bb0e8b
+    subnetIds:
+      - subnet-8c80e0ad
+      - subnet-48366946
+      - subnet-272d186a
+      - subnet-c26f099d
+      - subnet-d565cce4
+      - subnet-ee335688
+
+functions:
+  api:
+    handler: src/lambda.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          private: true
+
+package:
+  excludeDevDependencies: true
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node20
+    platform: node
+    external: ['aws-sdk']
