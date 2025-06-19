@@ -25,7 +25,7 @@ A TypeScript-based Express.js application deployed via the Serverless Framework 
 ### 1. Clone the repo
 
 ```bash
-git clone git clone https://github.com/hkunkel2/habit-quest-api.git
+git clone https://github.com/hkunkel2/habit-quest-api.git
 cd habit-quest-api
 ```
 
