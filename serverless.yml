@@ -1,6 +1,6 @@
 service: habit-quest-backend
 
-frameworkVersion: '3'
+frameworkVersion: '^3.0.0'
 
 provider:
   name: aws
