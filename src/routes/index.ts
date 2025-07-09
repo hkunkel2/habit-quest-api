@@ -1,10 +1,10 @@
 import { Router } from 'express';
+import userRoutes from './userRoutes';
+import * as dns from 'dns';
 
 const router = Router();
 
-router.get('/', (req, res) => {
-  res.json({ message: 'Hello from Lambda Express API!' });
-});
+router.use('/api/users', userRoutes);
 
 export default router;
 

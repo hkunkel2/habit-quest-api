@@ -11,15 +11,18 @@ import {
     @PrimaryGeneratedColumn()
     id: number;
   
-    @Column({ unique: true })
+    @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
     email: string;
   
-    @Column()
+    @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
+    username: string;
+  
+    @Column({ type: 'varchar', length: 100, nullable: false })
     password: string;
   
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
   
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
   }

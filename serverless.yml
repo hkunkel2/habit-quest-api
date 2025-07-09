@@ -16,6 +16,8 @@ provider:
     DB_USER: ${env:DB_USER}
     DB_PASSWORD: ${env:DB_PASSWORD}
     DB_NAME: ${env:DB_NAME}
+    JWT_SECRET: ${env:JWT_SECRET}
+    DB_NJWT_EXPIRES_IN_MINSAME: ${env:JWT_EXPIRES_IN_MINS}
   vpc:
     securityGroupIds:
       - sg-84bb0e8b
@@ -30,9 +32,10 @@ provider:
 functions:
   api:
     handler: src/lambda.handler
+    timeout: 6
     events:
       - http:
-          path: /
+          path: /{proxy+}
           method: ANY
           private: true
 
