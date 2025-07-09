@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from './jwt';
 
-// Extend Express Request to include "user"
 declare global {
   namespace Express {
     interface Request {
