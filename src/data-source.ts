@@ -1,5 +1,7 @@
 import { DataSource } from 'typeorm';
 import { User } from './entities/User';
+import { Habit } from './entities/Habit';
+import { Category } from './entities/Category';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -8,7 +10,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [User],
+  entities: [User, Habit, Category],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
   ssl: process.env.NODE_ENV == 'local' ?  false : { rejectUnauthorized: false },

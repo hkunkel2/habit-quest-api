@@ -1,36 +1,29 @@
 import { AppDataSource } from '../data-source';
 import { User } from '../entities/User';
+import { ensureDbConnected } from './index';
 
-export async function ensureDbConnected() {
-  if (!AppDataSource.isInitialized) {
-    await AppDataSource.initialize();
-  }
-}
+const userRepo = AppDataSource.getRepository(User);
 
 export async function createUser(email: string, username: string, hashedPassword: string): Promise<User> {
   await ensureDbConnected();
-  const repo = AppDataSource.getRepository(User);
-  const user = repo.create({ email, username, password: hashedPassword });
-  return await repo.save(user);
+  const user = userRepo.create({ email, username, password: hashedPassword });
+  return await userRepo.save(user);
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   await ensureDbConnected();
-  const repo = AppDataSource.getRepository(User);
-  return await repo.findOneBy({ email });
+  return await userRepo.findOneBy({ email });
 }
 
 export async function findUserByUsername(username: string): Promise<User | null> {
   await ensureDbConnected();
-  const repo = AppDataSource.getRepository(User);
-  return await repo.findOneBy({ username });
+  return await userRepo.findOneBy({ username });
 }
 
 export async function getUsers(search?: string): Promise<User[]> {
   await ensureDbConnected();
-  const repo = AppDataSource.getRepository(User);
 
-  const qb = repo.createQueryBuilder('user');
+  const qb = userRepo.createQueryBuilder('user');
 
   if (search) {
     qb.where('user.email ILIKE :search OR user.username ILIKE :search', {
@@ -39,5 +32,10 @@ export async function getUsers(search?: string): Promise<User[]> {
   }
 
   return await qb.orderBy('user.createdAt', 'DESC').getMany();
+}
+
+export async function findUserById(id: string): Promise<User | null> {
+  await ensureDbConnected();
+  return await userRepo.findOneBy({ id });
 }
 
