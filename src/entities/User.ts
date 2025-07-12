@@ -4,12 +4,14 @@ import {
     Column,
     CreateDateColumn,
     UpdateDateColumn,
+    OneToMany,
   } from 'typeorm';
+import { Habit } from './Habit';
   
   @Entity()
   export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
   
     @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
     email: string;
@@ -25,4 +27,7 @@ import {
   
     @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
+
+    @OneToMany(() => Habit, habit => habit.user)
+    habits: Habit[];
   }
