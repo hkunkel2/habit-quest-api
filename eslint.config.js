@@ -3,6 +3,9 @@ import parserTs from '@typescript-eslint/parser';
 
 export default [
   {
+    ignores: ['src/migrations/**'],
+  },
+  {
     files: ['**/*.ts'],
     languageOptions: {
       parser: parserTs,
