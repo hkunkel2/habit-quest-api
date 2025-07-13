@@ -6,12 +6,12 @@ export class Category {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   name: string;
 
   @OneToMany(() => Habit, habit => habit.category)
   habits: Habit[];
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
 	active: boolean;
 }

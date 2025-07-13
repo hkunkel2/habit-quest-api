@@ -38,6 +38,7 @@ functions:
           path: /{proxy+}
           method: ANY
           private: true
+          cors: true
 
 package:
   excludeDevDependencies: true
