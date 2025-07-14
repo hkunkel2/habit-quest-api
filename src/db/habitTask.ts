@@ -72,16 +72,3 @@ export const completeHabitTask = async (id: string): Promise<HabitTask> => {
   
   return updatedTask;
 };
-
-export const updateHabitTask = async (id: string, data: Partial<HabitTask>): Promise<HabitTask> => {
-  await ensureDbConnected();
-  await habitTaskRepository.update(id, data);
-  const updatedTask = await habitTaskRepository.findOne({
-    where: { id },
-    relations: ['user', 'habit', 'streak'],
-  });
-  if (!updatedTask) {
-    throw new Error('Habit task not found');
-  }
-  return updatedTask;
-};
