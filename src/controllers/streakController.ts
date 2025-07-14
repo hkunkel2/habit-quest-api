@@ -161,6 +161,19 @@ export const completeHabitTask = async (req: Request, res: Response) => {
       return;
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const taskDate = new Date(existingTask.taskDate);
+    taskDate.setHours(0, 0, 0, 0);
+
+    if (taskDate.getTime() !== today.getTime()) {
+      res.status(400).json({ 
+        error: 'Habit tasks can only be completed on the day they were created for' 
+      });
+      return;
+    }
+
     if (existingTask.habit.status !== 'Active') {
       res.status(400).json({ error: `Cannot complete ${existingTask.habit.status} habit. Only Active habits can be completed.` });
       return;

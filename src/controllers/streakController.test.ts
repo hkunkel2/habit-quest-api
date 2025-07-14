@@ -45,9 +45,12 @@ const mockStreak = {
   habit: mockHabit
 };
 
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
 const mockHabitTask = {
   id: '44444444-4444-4444-4444-444444444444',
-  taskDate: '2025-07-13T00:00:00.000Z',
+  taskDate: today.toISOString(),
   isCompleted: false,
   completedAt: null,
   user: mockUser,
@@ -181,18 +184,6 @@ describe('Streak Controller', () => {
       expect(streakDB.createStreak).not.toHaveBeenCalled();
     });
     
-    it('should not allow completion of non-Active habit', async () => {
-      const draftHabit = { ...mockHabit, status: 'Draft' };
-      const draftHabitTask = { ...mockHabitTask, habit: draftHabit };
-      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(draftHabitTask);
-
-      const res = await request(app)
-        .patch(`/habits/task/${mockHabitTask.id}/complete`)
-        .send();
-
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Cannot complete Draft habit. Only Active habits can be completed.');
-    });
   });
 
   describe('getHabitStreaks', () => {
@@ -297,6 +288,51 @@ describe('Streak Controller', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Habit task already completed');
+    });
+
+    it('should not allow completion of yesterday\'s task', async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+      
+      const yesterdayTask = { ...mockHabitTask, taskDate: yesterday.toISOString() };
+      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(yesterdayTask);
+
+      const res = await request(app)
+        .patch(`/habits/task/${mockHabitTask.id}/complete`)
+        .send();
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Habit tasks can only be completed on the day they were created for');
+    });
+
+    it('should not allow completion of future task', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const futureTask = { ...mockHabitTask, taskDate: tomorrow.toISOString() };
+      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(futureTask);
+
+      const res = await request(app)
+        .patch(`/habits/task/${mockHabitTask.id}/complete`)
+        .send();
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Habit tasks can only be completed on the day they were created for');
+    });
+
+    it('should not allow completion of non-Active habit', async () => {
+      const draftHabit = { ...mockHabit, status: 'Draft' };
+      const draftHabitTask = { ...mockHabitTask, habit: draftHabit };
+      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(draftHabitTask);
+
+      const res = await request(app)
+        .patch(`/habits/task/${mockHabitTask.id}/complete`)
+        .send();
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Cannot complete Draft habit. Only Active habits can be completed.');
     });
   });
 });
