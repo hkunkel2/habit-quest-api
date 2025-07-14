@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './User';
 import { Category } from './Category';
+import { Streak } from './Streak';
+import { HabitTask } from './HabitTask';
 
 
 @Entity()
@@ -29,5 +31,11 @@ export class Habit {
     default: 'Draft',
   })
   status: 'Active' | 'Draft' | 'Completed' | 'Cancelled' | 'Deleted';
+
+  @OneToMany(() => Streak, streak => streak.habit)
+  streaks: Streak[];
+
+  @OneToMany(() => HabitTask, habitTask => habitTask.habit)
+  habitTasks: HabitTask[];
 
 }

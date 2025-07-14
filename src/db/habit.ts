@@ -28,3 +28,11 @@ export const deleteHabit = async (id: string) => {
 	await ensureDbConnected();
   await habitRepo.delete(id);
 };
+
+export const findHabitById = async (id: string) => {
+	await ensureDbConnected();
+  return await habitRepo.findOne({
+    where: { id },
+    relations: ['user', 'category'],
+  });
+};
