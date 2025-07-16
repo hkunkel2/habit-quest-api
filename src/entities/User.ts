@@ -9,6 +9,7 @@ import {
 import { Habit } from './Habit';
 import { Streak } from './Streak';
 import { HabitTask } from './HabitTask';
+import { UserRelationship } from './UserRelationship';
   
   @Entity()
   export class User {
@@ -38,4 +39,10 @@ import { HabitTask } from './HabitTask';
 
     @OneToMany(() => HabitTask, habitTask => habitTask.user)
     habitTasks: HabitTask[];
+
+    @OneToMany(() => UserRelationship, userRelationship => userRelationship.user)
+    userRelationships: UserRelationship[];
+
+    @OneToMany(() => UserRelationship, userRelationship => userRelationship.targetUser)
+    targetUserRelationships: UserRelationship[];
   }
