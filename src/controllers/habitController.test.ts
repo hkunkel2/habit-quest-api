@@ -89,6 +89,54 @@ describe('Habit Controller', () => {
       expect(res.body.habit).toEqual(mockHabit);
     });
 
+    it('should update a habit category when categoryId is provided and status is Draft', async () => {
+      (habitDB.findHabitById as jest.Mock).mockResolvedValue({ ...mockHabit, status: 'Draft' });
+      (categoryDB.findCategoryById as jest.Mock).mockResolvedValue(mockCategory);
+      (habitDB.updateHabit as jest.Mock).mockResolvedValue(mockHabit);
+
+      const res = await request(app)
+        .patch(`/habits/${mockHabit.id}/update`)
+        .send({ categoryId: mockCategory.id });
+
+      expect(res.status).toBe(200);
+      expect(habitDB.findHabitById).toHaveBeenCalledWith(mockHabit.id);
+      expect(categoryDB.findCategoryById).toHaveBeenCalledWith(mockCategory.id);
+      expect(habitDB.updateHabit).toHaveBeenCalledWith(mockHabit.id, { category: mockCategory });
+    });
+
+    it('should return 400 when trying to update category of non-Draft habit', async () => {
+      (habitDB.findHabitById as jest.Mock).mockResolvedValue({ ...mockHabit, status: 'Active' });
+
+      const res = await request(app)
+        .patch(`/habits/${mockHabit.id}/update`)
+        .send({ categoryId: mockCategory.id });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Category can only be updated when habit status is Draft');
+    });
+
+    it('should return 404 when habit is not found during category update', async () => {
+      (habitDB.findHabitById as jest.Mock).mockResolvedValue(null);
+
+      const res = await request(app)
+        .patch(`/habits/${mockHabit.id}/update`)
+        .send({ categoryId: mockCategory.id });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Habit not found');
+    });
+
+    it('should return 400 if categoryId is invalid', async () => {
+      (categoryDB.findCategoryById as jest.Mock).mockResolvedValue(null);
+
+      const res = await request(app)
+        .patch(`/habits/${mockHabit.id}/update`)
+        .send({ categoryId: 'invalid-category-id' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Category not found');
+    });
+
     it('should return 400 for invalid input', async () => {
       const res = await request(app)
         .patch(`/habits/${mockHabit.id}/update`)
