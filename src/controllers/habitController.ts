@@ -24,10 +24,36 @@ export const updateHabit = async (req: Request, res: Response) => {
         id: req.params.id,
         body: req.body,
       });
-    const habit = await habitDB.updateHabit(id, body);
+    
+    let updateData: any = { ...body };
+    if (body.categoryId) {
+      const currentHabit = await habitDB.findHabitById(id);
+      if (!currentHabit) {
+        throw new Error('Habit not found');
+      }
+      if (currentHabit.status !== 'Draft') {
+        throw new Error('Category can only be updated when habit status is Draft');
+      }
+      
+      const categoryEntity = await categoryDB.findCategoryById(body.categoryId);
+      if (!categoryEntity) {
+        throw new Error('Category not found');
+      }
+      const { categoryId, ...restData } = updateData;
+      updateData = { ...restData, category: categoryEntity };
+    }
+    
+    const habit = await habitDB.updateHabit(id, updateData);
     res.status(200).json({ message: 'Habit updated', habit });
   } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
+    const errorMessage = (error as Error).message;
+    if (errorMessage === 'Habit not found') {
+      res.status(404).json({ error: errorMessage });
+    } else if (errorMessage === 'Category not found' || errorMessage === 'Category can only be updated when habit status is Draft') {
+      res.status(400).json({ error: errorMessage });
+    } else {
+      res.status(400).json({ error: errorMessage });
+    }
   }
 };
 
