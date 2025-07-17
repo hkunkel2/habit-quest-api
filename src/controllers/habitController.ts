@@ -25,10 +25,8 @@ export const updateHabit = async (req: Request, res: Response) => {
         body: req.body,
       });
     
-    // Transform categoryId to category entity if present
     let updateData: any = { ...body };
     if (body.categoryId) {
-      // Check current habit status before allowing category update
       const currentHabit = await habitDB.findHabitById(id);
       if (!currentHabit) {
         throw new Error('Habit not found');
@@ -41,7 +39,6 @@ export const updateHabit = async (req: Request, res: Response) => {
       if (!categoryEntity) {
         throw new Error('Category not found');
       }
-      // Replace categoryId with category entity
       const { categoryId, ...restData } = updateData;
       updateData = { ...restData, category: categoryEntity };
     }

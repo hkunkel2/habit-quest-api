@@ -127,11 +127,12 @@ describe('Habit Controller', () => {
     });
 
     it('should return 400 if categoryId is invalid', async () => {
+      (habitDB.findHabitById as jest.Mock).mockResolvedValue({ ...mockHabit, status: 'Draft' });
       (categoryDB.findCategoryById as jest.Mock).mockResolvedValue(null);
 
       const res = await request(app)
         .patch(`/habits/${mockHabit.id}/update`)
-        .send({ categoryId: 'invalid-category-id' });
+        .send({ categoryId: '99999999-9999-9999-9999-999999999999' });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Category not found');
