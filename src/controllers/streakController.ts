@@ -234,7 +234,7 @@ export const completeHabitTask = async (req: Request, res: Response) => {
   }
 };
 
-async function processSingleHabitStatus(userId: string, habitId: string) {
+export async function processSingleHabitStatus(userId: string, habitId: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
