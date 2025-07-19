@@ -92,7 +92,7 @@ describe('Habit Controller', () => {
     it('should return 400 for invalid input', async () => {
       const res = await request(app)
         .patch(`/habits/${mockHabit.id}/update`)
-        .send({ status: 'Active' });
+        .send({ categoryId: 'invalid-uuid' });
 
       expect(res.status).toBe(400);
     });

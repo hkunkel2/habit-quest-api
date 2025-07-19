@@ -5,11 +5,17 @@ import * as streakDB from '../db/streak';
 import * as habitTaskDB from '../db/habitTask';
 import * as habitDB from '../db/habit';
 import * as userDB from '../db/user';
+import * as userCategoryExperienceDB from '../db/userCategoryExperience';
+import * as experienceTransactionDB from '../db/experienceTransaction';
+import { ExperienceCalculator } from '../services/ExperienceCalculator';
 
 jest.mock('../db/streak');
 jest.mock('../db/habitTask');
 jest.mock('../db/habit');
 jest.mock('../db/user');
+jest.mock('../services/ExperienceCalculator');
+jest.mock('../db/userCategoryExperience');
+jest.mock('../db/experienceTransaction');
 
 const app = express();
 app.use(express.json());
@@ -29,10 +35,16 @@ const mockUser = {
   username: 'testuser'
 };
 
+const mockCategory = {
+  id: 'cat1',
+  name: 'Fitness'
+};
+
 const mockHabit = { 
   id: '22222222-2222-2222-2222-222222222222',
   name: 'Daily Exercise',
-  status: 'Active'
+  status: 'Active',
+  category: mockCategory
 };
 
 const mockStreak = {
@@ -254,6 +266,23 @@ describe('Streak Controller', () => {
         count: 3
       });
 
+      const mockExperienceCalculator = {
+        calculateExperienceGain: jest.fn().mockReturnValue({
+          baseExperience: 10,
+          streakBonus: 3,
+          totalExperience: 13,
+          multiplier: 1.3
+        }),
+        calculateLevelInfo: jest.fn(),
+        calculateUserLevel: jest.fn(),
+        getExperienceRequiredForLevel: jest.fn(),
+        validateLevel: jest.fn(),
+        getConfig: jest.fn()
+      };
+      (ExperienceCalculator as jest.MockedClass<typeof ExperienceCalculator>).mockImplementation(() => mockExperienceCalculator as any);
+      (userCategoryExperienceDB.addExperienceToCategory as jest.Mock).mockResolvedValue({});
+      (experienceTransactionDB.createExperienceTransaction as jest.Mock).mockResolvedValue({});
+
       const res = await request(app)
         .patch(`/habits/task/${mockHabitTask.id}/complete`)
         .send();
@@ -262,6 +291,9 @@ describe('Streak Controller', () => {
       expect(res.body.message).toBe('Habit task completed successfully');
       expect(res.body.habitTask).toBeDefined();
       expect(res.body.currentStreak).toBeDefined();
+      expect(res.body.experienceGained).toBeDefined();
+      expect(res.body.experienceGained.totalExperience).toBe(13);
+      expect(res.body.experienceGained.category).toBe('Fitness');
     });
 
     it('should return 404 if habit task not found', async () => {

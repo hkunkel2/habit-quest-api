@@ -4,6 +4,10 @@ import * as habitTaskDB from '../db/habitTask';
 import * as habitDB from '../db/habit';
 import * as userDB from '../db/user';
 import { userHabitStatusSchema, habitTaskCompleteSchema } from '../validators/streakValidators';
+import { ExperienceCalculator } from '../services/ExperienceCalculator';
+import * as userCategoryExperienceDB from '../db/userCategoryExperience';
+import * as experienceTransactionDB from '../db/experienceTransaction';
+import { ExperienceTransactionType } from '../entities/ExperienceTransaction';
 
 export const updateHabitStatus = async (req: Request, res: Response) => {
   try {
@@ -162,12 +166,12 @@ export const completeHabitTask = async (req: Request, res: Response) => {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    const todayDateString = today.toISOString().split('T')[0];
+    
     const taskDate = new Date(existingTask.taskDate);
-    taskDate.setHours(0, 0, 0, 0);
-
-    if (taskDate.getTime() !== today.getTime()) {
+    const taskDateString = taskDate.toISOString().split('T')[0];
+    
+    if (taskDateString !== todayDateString) {
       res.status(400).json({ 
         error: 'Habit tasks can only be completed on the day they were created for' 
       });
@@ -182,8 +186,33 @@ export const completeHabitTask = async (req: Request, res: Response) => {
     const completedTask = await habitTaskDB.completeHabitTask(existingTask.id);
     
     const streak = existingTask.streak;
+    const updatedStreakCount = streak.count + 1;
     await streakDB.updateStreak(streak.id, {
-      count: streak.count + 1,
+      count: updatedStreakCount,
+    });
+    const experienceCalculator = new ExperienceCalculator();
+    const experienceResult = experienceCalculator.calculateExperienceGain(updatedStreakCount);
+    
+    if (!existingTask.habit.category) {
+      throw new Error('Habit category not found - cannot award experience');
+    }
+    
+    const categoryId = existingTask.habit.category.id;
+    await userCategoryExperienceDB.addExperienceToCategory(
+      existingTask.user.id,
+      categoryId,
+      experienceResult.totalExperience
+    );
+
+    await experienceTransactionDB.createExperienceTransaction({
+      userId: existingTask.user.id,
+      categoryId: categoryId,
+      habitTaskId: existingTask.id,
+      type: ExperienceTransactionType.HABIT_COMPLETION,
+      experienceGained: experienceResult.totalExperience,
+      streakCount: updatedStreakCount,
+      multiplier: experienceResult.multiplier,
+      description: `Completed habit: ${existingTask.habit.name} (Streak: ${updatedStreakCount})`,
     });
 
     const currentStreak = await streakDB.findActiveStreakByUserAndHabit(existingTask.user.id, existingTask.habit.id);
@@ -192,6 +221,13 @@ export const completeHabitTask = async (req: Request, res: Response) => {
       message: 'Habit task completed successfully',
       habitTask: completedTask,
       currentStreak,
+      experienceGained: {
+        baseExperience: experienceResult.baseExperience,
+        streakBonus: experienceResult.streakBonus,
+        totalExperience: experienceResult.totalExperience,
+        multiplier: experienceResult.multiplier,
+        category: existingTask.habit.category.name,
+      },
     });
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'An unexpected error occurred' });
