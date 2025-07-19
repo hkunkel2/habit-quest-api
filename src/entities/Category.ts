@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Habit } from './Habit';
+import { UserCategoryExperience } from './UserCategoryExperience';
+import { ExperienceTransaction } from './ExperienceTransaction';
 
 @Entity()
 export class Category {
@@ -14,4 +16,10 @@ export class Category {
 
   @Column({ type: 'boolean', default: true })
 	active: boolean;
+
+  @OneToMany(() => UserCategoryExperience, userCategoryExperience => userCategoryExperience.category)
+  userCategoryExperiences: UserCategoryExperience[];
+
+  @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.category)
+  experienceTransactions: ExperienceTransaction[];
 }

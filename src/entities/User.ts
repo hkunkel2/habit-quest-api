@@ -10,6 +10,8 @@ import { Habit } from './Habit';
 import { Streak } from './Streak';
 import { HabitTask } from './HabitTask';
 import { UserRelationship } from './UserRelationship';
+import { UserCategoryExperience } from './UserCategoryExperience';
+import { ExperienceTransaction } from './ExperienceTransaction';
   
   @Entity()
   export class User {
@@ -45,4 +47,10 @@ import { UserRelationship } from './UserRelationship';
 
     @OneToMany(() => UserRelationship, userRelationship => userRelationship.targetUser)
     targetUserRelationships: UserRelationship[];
+
+    @OneToMany(() => UserCategoryExperience, userCategoryExperience => userCategoryExperience.user)
+    userCategoryExperiences: UserCategoryExperience[];
+
+    @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.user)
+    experienceTransactions: ExperienceTransaction[];
   }
