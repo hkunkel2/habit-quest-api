@@ -2,11 +2,28 @@ import request from 'supertest';
 import express from 'express';
 import * as userController from '../controllers/userController';
 import * as userDB from '../db/user';
+import * as habitDB from '../db/habit';
+import * as userRelationshipDB from '../db/userRelationship';
+import * as userCategoryExperienceDB from '../db/userCategoryExperience';
+import * as experienceTransactionDB from '../db/experienceTransaction';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '../auth/jwt';
 
 jest.mock('../db/user');
+jest.mock('../db/habit');
+jest.mock('../db/userRelationship');
+jest.mock('../db/userCategoryExperience');
+jest.mock('../db/experienceTransaction');
 jest.mock('../auth/jwt');
+jest.mock('./streakController', () => ({
+  processSingleHabitStatus: jest.fn(),
+}));
+jest.mock('../services/ExperienceCalculator', () => ({
+  ExperienceCalculator: jest.fn().mockImplementation(() => ({
+    calculateUserLevel: jest.fn().mockReturnValue({ totalLevel: 1, totalExperience: 0 }),
+    calculateLevelInfo: jest.fn().mockReturnValue({ currentLevel: 1, experienceToNextLevel: 100, progress: 0 }),
+  })),
+}));
 
 const app = express();
 app.use(express.json());
@@ -18,11 +35,34 @@ app.get('/users', userController.getUsers);
 describe('User Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    (habitDB.getHabitsByUser as jest.Mock).mockResolvedValue([]);
+    (userRelationshipDB.getFriends as jest.Mock).mockResolvedValue([]);
+    (userRelationshipDB.getPendingFriendRequests as jest.Mock).mockResolvedValue([]);
+    (userRelationshipDB.getSentFriendRequests as jest.Mock).mockResolvedValue([]);
+    (userCategoryExperienceDB.getUserExperienceByCategory as jest.Mock).mockResolvedValue([]);
+    (userCategoryExperienceDB.getTotalUserExperience as jest.Mock).mockResolvedValue(0);
+    (experienceTransactionDB.getTotalExperienceGainedToday as jest.Mock).mockResolvedValue(0);
+    
+    const { processSingleHabitStatus } = require('./streakController');
+    (processSingleHabitStatus as jest.Mock).mockResolvedValue({
+      message: 'No habits to process',
+      habitTask: null,
+      currentStreak: null,
+      allStreaks: [],
+      created: false
+    });
+    
   });
 
   describe('signUpUser', () => {
     it('should sign up a user and return a token', async () => {
       (userDB.createUser as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+      });
+      (userDB.findUserById as jest.Mock).mockResolvedValue({
         id: 1,
         email: 'test@example.com',
         username: 'testuser',
@@ -35,6 +75,11 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.token).toBe('fakeToken');
+      expect(res.body.user).toBeDefined();
+      expect(res.body.habits).toBeDefined();
+      expect(res.body.levels).toBeDefined();
+      expect(res.body.friends).toBeDefined();
+      expect(res.body.experience).toBeDefined();
     });
 
     it('should return 400 if validation fails', async () => {
@@ -49,11 +94,14 @@ describe('User Controller', () => {
   describe('loginUser', () => {
     it('should login using email', async () => {
       const hashed = await bcrypt.hash('Password123!', 10);
-      (userDB.findUserByEmail as jest.Mock).mockResolvedValue({
+      const mockUser = {
         id: 1,
         email: 'test@example.com',
         password: hashed,
-      });
+        username: 'testuser',
+      };
+      (userDB.findUserByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(mockUser);
       (generateToken as jest.Mock).mockReturnValue('fakeToken');
 
       const res = await request(app)
@@ -62,15 +110,23 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.token).toBe('fakeToken');
+      expect(res.body.user).toBeDefined();
+      expect(res.body.habits).toBeDefined();
+      expect(res.body.levels).toBeDefined();
+      expect(res.body.friends).toBeDefined();
+      expect(res.body.experience).toBeDefined();
     });
 
     it('should login using username', async () => {
       const hashed = await bcrypt.hash('Password123!', 10);
-      (userDB.findUserByUsername as jest.Mock).mockResolvedValue({
+      const mockUser = {
         id: 1,
         email: 'test@example.com',
         password: hashed,
-      });
+        username: 'testuser',
+      };
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(mockUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(mockUser);
       (generateToken as jest.Mock).mockReturnValue('fakeToken');
 
       const res = await request(app)
@@ -79,6 +135,11 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.token).toBe('fakeToken');
+      expect(res.body.user).toBeDefined();
+      expect(res.body.habits).toBeDefined();
+      expect(res.body.levels).toBeDefined();
+      expect(res.body.friends).toBeDefined();
+      expect(res.body.experience).toBeDefined();
     });
 
     it('should return 401 on invalid credentials', async () => {

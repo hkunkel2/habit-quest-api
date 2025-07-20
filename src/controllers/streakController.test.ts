@@ -57,12 +57,15 @@ const mockStreak = {
   habit: mockHabit
 };
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+const getTodayDate = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
 
 const mockHabitTask = {
   id: '44444444-4444-4444-4444-444444444444',
-  taskDate: today.toISOString(),
+  taskDate: getTodayDate().toISOString(),
   isCompleted: false,
   completedAt: null,
   user: mockUser,
@@ -254,7 +257,11 @@ describe('Streak Controller', () => {
 
   describe('completeHabitTask', () => {
     it('should complete existing habit task and update streak', async () => {
-      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(mockHabitTask);
+      const todayTask = {
+        ...mockHabitTask,
+        taskDate: getTodayDate().toISOString()
+      };
+      (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(todayTask);
       (habitTaskDB.completeHabitTask as jest.Mock).mockResolvedValue({
         ...mockHabitTask,
         isCompleted: true,
@@ -323,9 +330,8 @@ describe('Streak Controller', () => {
     });
 
     it('should not allow completion of yesterday\'s task', async () => {
-      const yesterday = new Date();
+      const yesterday = getTodayDate();
       yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
       
       const yesterdayTask = { ...mockHabitTask, taskDate: yesterday.toISOString() };
       (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(yesterdayTask);
@@ -339,9 +345,8 @@ describe('Streak Controller', () => {
     });
 
     it('should not allow completion of future task', async () => {
-      const tomorrow = new Date();
+      const tomorrow = getTodayDate();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
       
       const futureTask = { ...mockHabitTask, taskDate: tomorrow.toISOString() };
       (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(futureTask);
@@ -356,7 +361,11 @@ describe('Streak Controller', () => {
 
     it('should not allow completion of non-Active habit', async () => {
       const draftHabit = { ...mockHabit, status: 'Draft' };
-      const draftHabitTask = { ...mockHabitTask, habit: draftHabit };
+      const draftHabitTask = { 
+        ...mockHabitTask, 
+        habit: draftHabit,
+        taskDate: getTodayDate().toISOString()
+      };
       (habitTaskDB.findHabitTaskById as jest.Mock).mockResolvedValue(draftHabitTask);
 
       const res = await request(app)
