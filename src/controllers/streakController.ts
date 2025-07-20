@@ -166,6 +166,7 @@ export const completeHabitTask = async (req: Request, res: Response) => {
     }
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const todayDateString = today.toISOString().split('T')[0];
     
     const taskDate = new Date(existingTask.taskDate);
