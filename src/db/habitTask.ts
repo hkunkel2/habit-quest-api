@@ -22,7 +22,7 @@ export const findHabitTaskById = async (id: string): Promise<HabitTask | null> =
   await ensureDbConnected();
   return await habitTaskRepository.findOne({
     where: { id },
-    relations: ['user', 'habit', 'streak'],
+    relations: ['user', 'habit', 'habit.category', 'streak'],
   });
 };
 
@@ -63,7 +63,7 @@ export const completeHabitTask = async (id: string): Promise<HabitTask> => {
   
   const updatedTask = await habitTaskRepository.findOne({
     where: { id },
-    relations: ['user', 'habit', 'streak'],
+    relations: ['user', 'habit', 'habit.category', 'streak'],
   });
   
   if (!updatedTask) {

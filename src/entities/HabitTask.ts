@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './User';
 import { Habit } from './Habit';
 import { Streak } from './Streak';
+import { ExperienceTransaction } from './ExperienceTransaction';
 
 @Entity()
 export class HabitTask {
@@ -31,4 +32,7 @@ export class HabitTask {
 
   @ManyToOne(() => Streak, streak => streak.habitTasks)
   streak: Streak;
+
+  @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.habitTask)
+  experienceTransactions: ExperienceTransaction[];
 }
