@@ -10,6 +10,7 @@ import { loginSchema, signUpSchema } from '../validators/userValidators';
 import { userIdSchema } from '../validators/experienceValidators';
 import { ExperienceCalculator } from '../services/ExperienceCalculator';
 import { processSingleHabitStatus } from './streakController';
+import { createPreSeededHabits } from '../services/habitSeedService';
 
 export const signUpUser = async (req: Request, res: Response) => {
   try {
@@ -17,6 +18,12 @@ export const signUpUser = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password.trim(), 10);
     const user = await userDB.createUser(email!, username!, hashedPassword);
     const token = generateToken({ id: user.id, email: user.email });
+    
+    try {
+      await createPreSeededHabits(user.id);
+    } catch (habitError) {
+      console.error('Failed to create pre-seeded habits:', habitError);
+    }
     
     const profileData = await buildUserProfileData(user.id);
     

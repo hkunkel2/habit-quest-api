@@ -24,6 +24,16 @@ jest.mock('../services/ExperienceCalculator', () => ({
     calculateLevelInfo: jest.fn().mockReturnValue({ currentLevel: 1, experienceToNextLevel: 100, progress: 0 }),
   })),
 }));
+jest.mock('../services/habitSeedService', () => ({
+  createPreSeededHabits: jest.fn(),
+  DEFAULT_STUDENT_HABITS: [
+    { name: 'Study for 30 minutes', categoryName: 'School' },
+    { name: 'Get 8 hours of sleep', categoryName: 'Sleep' },
+    { name: 'Exercise for 20 minutes', categoryName: 'Fitness' },
+    { name: 'Read for 15 minutes', categoryName: 'Reading' },
+    { name: 'Practice mindfulness for 5 minutes', categoryName: 'Mindfulness' }
+  ]
+}));
 
 const app = express();
 app.use(express.json());
@@ -57,6 +67,7 @@ describe('User Controller', () => {
 
   describe('signUpUser', () => {
     it('should sign up a user and return a token', async () => {
+      const { createPreSeededHabits } = require('../services/habitSeedService');
       (userDB.createUser as jest.Mock).mockResolvedValue({
         id: 1,
         email: 'test@example.com',
@@ -68,6 +79,7 @@ describe('User Controller', () => {
         username: 'testuser',
       });
       (generateToken as jest.Mock).mockReturnValue('fakeToken');
+      (createPreSeededHabits as jest.Mock).mockResolvedValue(undefined);
 
       const res = await request(app)
         .post('/signup')
@@ -80,6 +92,7 @@ describe('User Controller', () => {
       expect(res.body.levels).toBeDefined();
       expect(res.body.friends).toBeDefined();
       expect(res.body.experience).toBeDefined();
+      expect(createPreSeededHabits).toHaveBeenCalledWith(1);
     });
 
     it('should return 400 if validation fails', async () => {
@@ -88,6 +101,69 @@ describe('User Controller', () => {
         .send({ email: '', password: '', username: '' });
 
       expect(res.status).toBe(400);
+    });
+
+    it('should still succeed if pre-seeded habits creation fails', async () => {
+      const { createPreSeededHabits } = require('../services/habitSeedService');
+      (userDB.createUser as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+      });
+      (userDB.findUserById as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+      });
+      (generateToken as jest.Mock).mockReturnValue('fakeToken');
+      (createPreSeededHabits as jest.Mock).mockRejectedValue(new Error('Habit creation failed'));
+
+      const res = await request(app)
+        .post('/signup')
+        .send({ email: 'test@example.com', password: 'Password123!', username: 'testuser' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.token).toBe('fakeToken');
+      expect(createPreSeededHabits).toHaveBeenCalledWith(1);
+    });
+
+    it('should create user with pre-seeded habits in profile data', async () => {
+      const { createPreSeededHabits } = require('../services/habitSeedService');
+      const mockHabits = [
+        { id: '1', name: 'Study for 30 minutes', status: 'Draft', category: { name: 'School' } },
+        { id: '2', name: 'Get 8 hours of sleep', status: 'Draft', category: { name: 'Sleep' } },
+        { id: '3', name: 'Exercise for 20 minutes', status: 'Draft', category: { name: 'Fitness' } },
+        { id: '4', name: 'Read for 15 minutes', status: 'Draft', category: { name: 'Reading' } },
+        { id: '5', name: 'Practice mindfulness for 5 minutes', status: 'Draft', category: { name: 'Mindfulness' } }
+      ];
+      
+      (userDB.createUser as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+      });
+      (userDB.findUserById as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: 'test@example.com',
+        username: 'testuser',
+      });
+      (habitDB.getHabitsByUser as jest.Mock).mockResolvedValue(mockHabits);
+      (generateToken as jest.Mock).mockReturnValue('fakeToken');
+      (createPreSeededHabits as jest.Mock).mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post('/signup')
+        .send({ email: 'test@example.com', password: 'Password123!', username: 'testuser' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.token).toBe('fakeToken');
+      expect(createPreSeededHabits).toHaveBeenCalledWith(1);
+      expect(res.body.habits).toHaveLength(5);
+      expect(res.body.habits[0].habitName).toBe('Study for 30 minutes');
+      expect(res.body.habits[1].habitName).toBe('Get 8 hours of sleep');
+      expect(res.body.habits[2].habitName).toBe('Exercise for 20 minutes');
+      expect(res.body.habits[3].habitName).toBe('Read for 15 minutes');
+      expect(res.body.habits[4].habitName).toBe('Practice mindfulness for 5 minutes');
     });
   });
 
