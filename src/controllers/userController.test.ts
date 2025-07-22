@@ -264,8 +264,9 @@ describe('User Controller', () => {
 
   describe('updateUser', () => {
     it('should update user theme successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const mockUser = {
-        id: '1',
+        id: mockUserId,
         email: 'test@example.com',
         username: 'testuser',
         theme: 'LIGHT'
@@ -276,18 +277,19 @@ describe('User Controller', () => {
       (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
 
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ theme: 'DARK' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('User updated successfully');
       expect(res.body.user).toBeDefined();
-      expect(userDB.updateUser).toHaveBeenCalledWith('1', { theme: 'DARK' });
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { theme: 'DARK' });
     });
 
     it('should update username successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const mockUser = {
-        id: '1',
+        id: mockUserId,
         email: 'test@example.com',
         username: 'testuser',
         theme: 'LIGHT'
@@ -299,18 +301,19 @@ describe('User Controller', () => {
       (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
 
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ username: 'newusername' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('User updated successfully');
       expect(userDB.findUserByUsername).toHaveBeenCalledWith('newusername');
-      expect(userDB.updateUser).toHaveBeenCalledWith('1', { username: 'newusername' });
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { username: 'newusername' });
     });
 
     it('should update both username and theme successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const mockUser = {
-        id: '1',
+        id: mockUserId,
         email: 'test@example.com',
         username: 'testuser',
         theme: 'LIGHT'
@@ -322,17 +325,18 @@ describe('User Controller', () => {
       (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
 
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ username: 'newusername', theme: 'DARK' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('User updated successfully');
-      expect(userDB.updateUser).toHaveBeenCalledWith('1', { username: 'newusername', theme: 'DARK' });
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { username: 'newusername', theme: 'DARK' });
     });
 
     it('should return 400 if username already exists', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const existingUser = {
-        id: '2',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         email: 'other@example.com',
         username: 'existinguser',
         theme: 'LIGHT'
@@ -341,7 +345,7 @@ describe('User Controller', () => {
       (userDB.findUserByUsername as jest.Mock).mockResolvedValue(existingUser);
 
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ username: 'existinguser' });
 
       expect(res.status).toBe(400);
@@ -349,11 +353,12 @@ describe('User Controller', () => {
     });
 
     it('should return 404 if user not found', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440002';
       (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
       (userDB.updateUser as jest.Mock).mockResolvedValue(null);
 
       const res = await request(app)
-        .patch('/999/update')
+        .patch(`/${mockUserId}/update`)
         .send({ theme: 'DARK' });
 
       expect(res.status).toBe(404);
@@ -361,8 +366,9 @@ describe('User Controller', () => {
     });
 
     it('should return 400 for invalid theme', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ theme: 'INVALID' });
 
       expect(res.status).toBe(400);
@@ -370,8 +376,9 @@ describe('User Controller', () => {
     });
 
     it('should return 400 for invalid username (too short)', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({ username: 'ab' });
 
       expect(res.status).toBe(400);
@@ -379,8 +386,9 @@ describe('User Controller', () => {
     });
 
     it('should return 400 if no fields provided', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
       const res = await request(app)
-        .patch('/1/update')
+        .patch(`/${mockUserId}/update`)
         .send({});
 
       expect(res.status).toBe(400);
