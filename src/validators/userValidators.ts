@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Theme } from '../entities/User';
 
 export const signUpSchema = z.object({
   email: z.string().email(),
@@ -12,4 +13,13 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 }).refine((data) => data.email || data.username, {
   message: 'Either email or username must be provided',
+});
+
+export const updateUserSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters long').optional(),
+  theme: z.nativeEnum(Theme, {
+    errorMap: () => ({ message: 'Theme must be either LIGHT or DARK' }),
+  }).optional(),
+}).refine((data) => data.username !== undefined || data.theme !== undefined, {
+  message: 'At least one field (username or theme) must be provided',
 });

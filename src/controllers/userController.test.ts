@@ -41,6 +41,7 @@ app.post('/signup', userController.signUpUser);
 app.post('/login', userController.loginUser);
 app.post('/logout', userController.logoutUser);
 app.get('/users', userController.getUsers);
+app.patch('/:userId/update', userController.updateUser);
 
 describe('User Controller', () => {
   beforeEach(() => {
@@ -258,6 +259,140 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Database error');
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user theme successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const mockUser = {
+        id: mockUserId,
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, theme: 'DARK' };
+      
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ theme: 'DARK' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(res.body.user).toBeDefined();
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { theme: 'DARK' });
+    });
+
+    it('should update username successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const mockUser = {
+        id: mockUserId,
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, username: 'newusername' };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ username: 'newusername' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(userDB.findUserByUsername).toHaveBeenCalledWith('newusername');
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { username: 'newusername' });
+    });
+
+    it('should update both username and theme successfully', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const mockUser = {
+        id: mockUserId,
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, username: 'newusername', theme: 'DARK' };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ username: 'newusername', theme: 'DARK' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(userDB.updateUser).toHaveBeenCalledWith(mockUserId, { username: 'newusername', theme: 'DARK' });
+    });
+
+    it('should return 400 if username already exists', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const existingUser = {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        email: 'other@example.com',
+        username: 'existinguser',
+        theme: 'LIGHT'
+      };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(existingUser);
+
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ username: 'existinguser' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Username already exists');
+    });
+
+    it('should return 404 if user not found', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440002';
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(null);
+
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ theme: 'DARK' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('User not found');
+    });
+
+    it('should return 400 for invalid theme', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ theme: 'INVALID' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
+    });
+
+    it('should return 400 for invalid username (too short)', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({ username: 'ab' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
+    });
+
+    it('should return 400 if no fields provided', async () => {
+      const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
+      const res = await request(app)
+        .patch(`/${mockUserId}/update`)
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
     });
   });
 });

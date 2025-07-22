@@ -6,6 +6,11 @@ import {
     UpdateDateColumn,
     OneToMany,
   } from 'typeorm';
+
+export enum Theme {
+  LIGHT = 'LIGHT',
+  DARK = 'DARK'
+}
 import { Habit } from './Habit';
 import { Streak } from './Streak';
 import { HabitTask } from './HabitTask';
@@ -26,6 +31,9 @@ import { ExperienceTransaction } from './ExperienceTransaction';
   
     @Column({ type: 'varchar', length: 100, nullable: false })
     password: string;
+  
+    @Column({ type: 'enum', enum: Theme, default: Theme.LIGHT })
+    theme: Theme;
   
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;

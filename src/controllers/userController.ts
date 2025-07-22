@@ -6,7 +6,7 @@ import * as userCategoryExperienceDB from '../db/userCategoryExperience';
 import * as experienceTransactionDB from '../db/experienceTransaction';
 import { generateToken } from '../auth/jwt';
 import bcrypt from 'bcryptjs';
-import { loginSchema, signUpSchema } from '../validators/userValidators';
+import { loginSchema, signUpSchema, updateUserSchema } from '../validators/userValidators';
 import { userIdSchema } from '../validators/experienceValidators';
 import { ExperienceCalculator } from '../services/ExperienceCalculator';
 import { processSingleHabitStatus } from './streakController';
@@ -140,7 +140,8 @@ const buildUserProfileData = async (userId: string) => {
     user: {
       id: user.id,
       email: user.email,
-      username: user.username
+      username: user.username,
+      theme: user.theme
     },
     habits: habitsWithStatus,
     levels: {
@@ -177,6 +178,45 @@ export const getUserProfile = async (req: Request, res: Response) => {
       });
     } else if (error.message === 'User not found') {
       res.status(404).json({ error: 'User not found' });
+    } else {
+      res.status(500).json({ error: error.message || 'An unexpected error occurred' });
+    }
+  }
+};
+
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = userIdSchema.parse({ userId: req.params.userId });
+    const updates = updateUserSchema.parse(req.body);
+    
+    if (updates.username) {
+      const existingUser = await userDB.findUserByUsername(updates.username);
+      if (existingUser && existingUser.id !== userId) {
+        res.status(400).json({ error: 'Username already exists' });
+        return;
+      }
+    }
+    
+    const updatedUser = await userDB.updateUser(userId, updates);
+    if (!updatedUser) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    
+    const profileData = await buildUserProfileData(userId);
+    res.status(200).json({ 
+      message: 'User updated successfully',
+      ...profileData
+    });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      res.status(400).json({ 
+        error: 'Invalid request data',
+        details: error.errors.map((err: any) => ({
+          field: err.path.join('.'),
+          message: err.message
+        }))
+      });
     } else {
       res.status(500).json({ error: error.message || 'An unexpected error occurred' });
     }
