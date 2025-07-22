@@ -41,6 +41,7 @@ app.post('/signup', userController.signUpUser);
 app.post('/login', userController.loginUser);
 app.post('/logout', userController.logoutUser);
 app.get('/users', userController.getUsers);
+app.patch('/:userId/update', userController.updateUser);
 
 describe('User Controller', () => {
   beforeEach(() => {
@@ -258,6 +259,132 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Database error');
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user theme successfully', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, theme: 'DARK' };
+      
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ theme: 'DARK' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(res.body.user).toBeDefined();
+      expect(userDB.updateUser).toHaveBeenCalledWith('1', { theme: 'DARK' });
+    });
+
+    it('should update username successfully', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, username: 'newusername' };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ username: 'newusername' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(userDB.findUserByUsername).toHaveBeenCalledWith('newusername');
+      expect(userDB.updateUser).toHaveBeenCalledWith('1', { username: 'newusername' });
+    });
+
+    it('should update both username and theme successfully', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        username: 'testuser',
+        theme: 'LIGHT'
+      };
+      const updatedUser = { ...mockUser, username: 'newusername', theme: 'DARK' };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(updatedUser);
+      (userDB.findUserById as jest.Mock).mockResolvedValue(updatedUser);
+
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ username: 'newusername', theme: 'DARK' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('User updated successfully');
+      expect(userDB.updateUser).toHaveBeenCalledWith('1', { username: 'newusername', theme: 'DARK' });
+    });
+
+    it('should return 400 if username already exists', async () => {
+      const existingUser = {
+        id: '2',
+        email: 'other@example.com',
+        username: 'existinguser',
+        theme: 'LIGHT'
+      };
+      
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(existingUser);
+
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ username: 'existinguser' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Username already exists');
+    });
+
+    it('should return 404 if user not found', async () => {
+      (userDB.findUserByUsername as jest.Mock).mockResolvedValue(null);
+      (userDB.updateUser as jest.Mock).mockResolvedValue(null);
+
+      const res = await request(app)
+        .patch('/999/update')
+        .send({ theme: 'DARK' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('User not found');
+    });
+
+    it('should return 400 for invalid theme', async () => {
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ theme: 'INVALID' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
+    });
+
+    it('should return 400 for invalid username (too short)', async () => {
+      const res = await request(app)
+        .patch('/1/update')
+        .send({ username: 'ab' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
+    });
+
+    it('should return 400 if no fields provided', async () => {
+      const res = await request(app)
+        .patch('/1/update')
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid request data');
     });
   });
 });

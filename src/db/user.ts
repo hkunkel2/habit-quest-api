@@ -1,5 +1,5 @@
 import { AppDataSource } from '../data-source';
-import { User } from '../entities/User';
+import { User, Theme } from '../entities/User';
 import { ensureDbConnected } from './index';
 
 const userRepo = AppDataSource.getRepository(User);
@@ -37,5 +37,22 @@ export async function getUsers(search?: string): Promise<User[]> {
 export async function findUserById(id: string): Promise<User | null> {
   await ensureDbConnected();
   return await userRepo.findOneBy({ id });
+}
+
+export async function updateUser(id: string, updates: { username?: string; theme?: Theme }): Promise<User | null> {
+  await ensureDbConnected();
+  const user = await userRepo.findOneBy({ id });
+  if (!user) {
+    return null;
+  }
+  
+  if (updates.username !== undefined) {
+    user.username = updates.username;
+  }
+  if (updates.theme !== undefined) {
+    user.theme = updates.theme;
+  }
+  
+  return await userRepo.save(user);
 }
 
