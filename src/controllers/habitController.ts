@@ -75,9 +75,19 @@ export const deleteHabit = async (req: Request, res: Response) => {
 export const getHabitsByUser = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
+    
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+    
     const habits = await habitDB.getHabitsByUser(userId);
     res.status(200).json(habits);
   } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    const errorMessage = (error as Error).message;
+    if (errorMessage === 'User ID is required') {
+      res.status(400).json({ error: errorMessage });
+    } else {
+      res.status(500).json({ error: errorMessage });
+    }
   }
 };

@@ -19,10 +19,10 @@ export class Habit {
 	@Column({ type: 'timestamp', nullable: true })
 	startDate: Date | null;
 
-  @ManyToOne(() => User, user => user.habits)
+  @ManyToOne(() => User, user => user.habits, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Category, category => category.habits)
+  @ManyToOne(() => Category, category => category.habits, { onDelete: 'SET NULL' })
   category: Category;
 
 	@Column({
@@ -32,10 +32,10 @@ export class Habit {
   })
   status: 'Active' | 'Draft' | 'Completed' | 'Cancelled' | 'Deleted';
 
-  @OneToMany(() => Streak, streak => streak.habit)
+  @OneToMany(() => Streak, streak => streak.habit, { cascade: true })
   streaks: Streak[];
 
-  @OneToMany(() => HabitTask, habitTask => habitTask.habit)
+  @OneToMany(() => HabitTask, habitTask => habitTask.habit, { cascade: true })
   habitTasks: HabitTask[];
 
 }

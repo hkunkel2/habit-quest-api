@@ -41,24 +41,24 @@ import { ExperienceTransaction } from './ExperienceTransaction';
     @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 
-    @OneToMany(() => Habit, habit => habit.user)
+    @OneToMany(() => Habit, habit => habit.user, { cascade: true })
     habits: Habit[];
 
-    @OneToMany(() => Streak, streak => streak.user)
+    @OneToMany(() => Streak, streak => streak.user, { cascade: true })
     streaks: Streak[];
 
-    @OneToMany(() => HabitTask, habitTask => habitTask.user)
+    @OneToMany(() => HabitTask, habitTask => habitTask.user, { cascade: true })
     habitTasks: HabitTask[];
 
-    @OneToMany(() => UserRelationship, userRelationship => userRelationship.user)
+    @OneToMany(() => UserRelationship, userRelationship => userRelationship.user, { cascade: true })
     userRelationships: UserRelationship[];
 
-    @OneToMany(() => UserRelationship, userRelationship => userRelationship.targetUser)
+    @OneToMany(() => UserRelationship, userRelationship => userRelationship.targetUser, { cascade: true })
     targetUserRelationships: UserRelationship[];
 
-    @OneToMany(() => UserCategoryExperience, userCategoryExperience => userCategoryExperience.user)
+    @OneToMany(() => UserCategoryExperience, userCategoryExperience => userCategoryExperience.user, { cascade: true })
     userCategoryExperiences: UserCategoryExperience[];
 
-    @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.user)
+    @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.user, { cascade: true })
     experienceTransactions: ExperienceTransaction[];
   }

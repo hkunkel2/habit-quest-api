@@ -24,15 +24,15 @@ export class HabitTask {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.habitTasks)
+  @ManyToOne(() => User, user => user.habitTasks, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Habit, habit => habit.habitTasks)
+  @ManyToOne(() => Habit, habit => habit.habitTasks, { onDelete: 'CASCADE' })
   habit: Habit;
 
-  @ManyToOne(() => Streak, streak => streak.habitTasks)
+  @ManyToOne(() => Streak, streak => streak.habitTasks, { onDelete: 'CASCADE' })
   streak: Streak;
 
-  @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.habitTask)
+  @OneToMany(() => ExperienceTransaction, experienceTransaction => experienceTransaction.habitTask, { cascade: true })
   experienceTransactions: ExperienceTransaction[];
 }

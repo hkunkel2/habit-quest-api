@@ -51,15 +51,15 @@ export class ExperienceTransaction {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => User, user => user.experienceTransactions)
+  @ManyToOne(() => User, user => user.experienceTransactions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Category, category => category.experienceTransactions)
+  @ManyToOne(() => Category, category => category.experienceTransactions, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 
-  @ManyToOne(() => HabitTask, habitTask => habitTask.experienceTransactions, { nullable: true })
+  @ManyToOne(() => HabitTask, habitTask => habitTask.experienceTransactions, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'habitTaskId' })
   habitTask?: HabitTask;
 }

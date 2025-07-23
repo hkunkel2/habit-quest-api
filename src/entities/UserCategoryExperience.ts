@@ -32,11 +32,11 @@ export class UserCategoryExperience {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.userCategoryExperiences)
+  @ManyToOne(() => User, user => user.userCategoryExperiences, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Category, category => category.userCategoryExperiences)
+  @ManyToOne(() => Category, category => category.userCategoryExperiences, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 }
