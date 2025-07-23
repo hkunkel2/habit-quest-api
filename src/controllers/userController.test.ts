@@ -249,7 +249,65 @@ describe('User Controller', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual(mockUsers);
-      expect(userDB.getUsers).toHaveBeenCalledWith('john');
+      expect(userDB.getUsers).toHaveBeenCalledWith('john', false, undefined);
+    });
+
+    it('should return all users when no query parameters are provided', async () => {
+      const mockUsers = [
+        { id: 1, email: 'john@example.com', username: 'john', password: 'hashed' },
+        { id: 2, email: 'jane@example.com', username: 'jane', password: 'hashed' },
+      ];
+      (userDB.getUsers as jest.Mock).mockResolvedValue(mockUsers);
+
+      const res = await request(app).get('/users');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockUsers);
+      expect(userDB.getUsers).toHaveBeenCalledWith(undefined, false, undefined);
+    });
+
+    it('should return friends only when friendsOnly=true and userId provided', async () => {
+      const mockFriends = [
+        { id: 2, email: 'friend@example.com', username: 'friend', password: 'hashed' },
+      ];
+      (userDB.getUsers as jest.Mock).mockResolvedValue(mockFriends);
+
+      const res = await request(app).get('/users?friendsOnly=true&userId=user123');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockFriends);
+      expect(userDB.getUsers).toHaveBeenCalledWith(undefined, true, 'user123');
+    });
+
+    it('should search within friends when friendsOnly=true, userId and search provided', async () => {
+      const mockFilteredFriends = [
+        { id: 2, email: 'john.friend@example.com', username: 'johnfriend', password: 'hashed' },
+      ];
+      (userDB.getUsers as jest.Mock).mockResolvedValue(mockFilteredFriends);
+
+      const res = await request(app).get('/users?friendsOnly=true&userId=user123&search=john');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockFilteredFriends);
+      expect(userDB.getUsers).toHaveBeenCalledWith('john', true, 'user123');
+    });
+
+    it('should return 400 when friendsOnly=true but userId is missing', async () => {
+      const res = await request(app).get('/users?friendsOnly=true');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('userId is required when friendsOnly is true');
+      expect(userDB.getUsers).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when user has no friends and friendsOnly=true', async () => {
+      (userDB.getUsers as jest.Mock).mockResolvedValue([]);
+
+      const res = await request(app).get('/users?friendsOnly=true&userId=user123');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+      expect(userDB.getUsers).toHaveBeenCalledWith(undefined, true, 'user123');
     });
 
     it('should return 500 if an error occurs', async () => {

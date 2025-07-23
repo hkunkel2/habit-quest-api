@@ -65,10 +65,18 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUsers = async (req: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const search = req.query.search as string | undefined;
-    const users = await userDB.getUsers(search);
+    const friendsOnly = req.query.friendsOnly === 'true';
+    const userId = req.query.userId as string | undefined;
+    
+    if (friendsOnly && !userId) {
+      res.status(400).json({ error: 'userId is required when friendsOnly is true' });
+      return;
+    }
+    
+    const users = await userDB.getUsers(search, friendsOnly, userId);
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });

@@ -20,13 +20,22 @@ export async function findUserByUsername(username: string): Promise<User | null>
   return await userRepo.findOneBy({ username });
 }
 
-export async function getUsers(search?: string): Promise<User[]> {
+export async function getUsers(search?: string, friendsOnly?: boolean, userId?: string): Promise<User[]> {
   await ensureDbConnected();
 
   const qb = userRepo.createQueryBuilder('user');
 
+  if (friendsOnly && userId) {
+    qb.innerJoin(
+      'user_relationship',
+      'ur',
+      '(ur.user_id = :userId AND ur.target_user_id = user.id AND ur.type = :friendType) OR (ur.target_user_id = :userId AND ur.user_id = user.id AND ur.type = :friendType)',
+      { userId, friendType: 'FRIEND' }
+    );
+  }
+
   if (search) {
-    qb.where('user.email ILIKE :search OR user.username ILIKE :search', {
+    qb.andWhere('user.email ILIKE :search OR user.username ILIKE :search', {
       search: `%${search}%`,
     });
   }
