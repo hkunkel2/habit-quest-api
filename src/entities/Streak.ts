@@ -26,12 +26,12 @@ export class Streak {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.streaks)
+  @ManyToOne(() => User, user => user.streaks, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Habit, habit => habit.streaks)
+  @ManyToOne(() => Habit, habit => habit.streaks, { onDelete: 'CASCADE' })
   habit: Habit;
 
-  @OneToMany(() => HabitTask, habitTask => habitTask.streak)
+  @OneToMany(() => HabitTask, habitTask => habitTask.streak, { cascade: true })
   habitTasks: HabitTask[];
 }

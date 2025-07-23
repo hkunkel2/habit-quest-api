@@ -7,7 +7,7 @@ const router = Router();
 router.post('/create', createHabit);
 router.patch('/:id/update', updateHabit);
 router.delete('/:id/delete', deleteHabit);
-router.get('/:id/get', getHabitsByUser);
+router.get('/:userId/get', getHabitsByUser);
 router.post('/users/:userId/status', updateHabitStatus);
 router.get('/users/:userId/streaks', getHabitStreaks);
 router.patch('/task/:id/complete', completeHabitTask);
