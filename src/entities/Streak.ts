@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from './User';
 import { Habit } from './Habit';
 import { HabitTask } from './HabitTask';
@@ -26,10 +26,18 @@ export class Streak {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
+  @Column({ type: 'uuid' })
+  userId: string;
+
+  @Column({ type: 'uuid' })
+  habitId: string;
+
   @ManyToOne(() => User, user => user.streaks, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @ManyToOne(() => Habit, habit => habit.streaks, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'habitId' })
   habit: Habit;
 
   @OneToMany(() => HabitTask, habitTask => habitTask.streak, { cascade: true })
